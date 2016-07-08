@@ -41,6 +41,8 @@ function BookReader() {
     this.constMode2up = 2;
     this.constModeThumb = 3;
 
+    this.rotations = [];
+
     this.reduce  = 4;
     this.padding = 10;          // Padding in 1up
 
@@ -394,7 +396,7 @@ BookReader.prototype.drawLeafs = function() {
     } else {
         this.drawLeafsTwoPage();
     }
-
+    console.log('drawLeafs');
 }
 
 // bindGestures(jElement)
@@ -484,8 +486,8 @@ BookReader.prototype.drawLeafsOnePage = function() {
     }
 
     //var viewWidth = $('#BRpageview').width(); //includes scroll bar width
-    var viewWidth = $('#BRcontainer').attr('scrollWidth');
-
+    //var viewWidth2 = $('#BRcontainer').attr('scrollWidth'); // seems this is messed up when zoomed
+    var viewWidth = $('#BookReader').attr('scrollWidth') - 17;
 
     for (i=0; i<indicesToDisplay.length; i++) {
         var index = indicesToDisplay[i];
@@ -498,6 +500,16 @@ BookReader.prototype.drawLeafsOnePage = function() {
             div.className = 'BRpagediv1up';
             div.id = 'pagediv'+index;
             div.style.position = "absolute";
+            var src = this._getPageURI(index, this.reduce, 0);
+            if(this.rotations[index] == 90 || this.rotations[index] == 270) {
+                var temp = width;
+                width = height;
+                height = temp;
+                src = src.replace("rotate=0", 'rotate=' + this.rotations[index]);
+                $(div).css('margin-top', (width - height) / 2 + 'px');
+            } else {
+                $(div).css('margin-top', 0);
+            }
             $(div).css('top', leafTop + 'px');
             var left = (viewWidth-width)>>1;
             if (left<0) left = 0;
@@ -509,7 +521,7 @@ BookReader.prototype.drawLeafsOnePage = function() {
             $('#BRpageview').append(div);
 
             var img = document.createElement("img");
-            img.src = this._getPageURI(index, this.reduce, 0);
+            img.src = src;
             $(img).addClass('BRnoselect');
             $(img).css('width', width+'px');
             $(img).css('height', height+'px');
@@ -1349,6 +1361,7 @@ BookReader.prototype.jumpToIndex = function(index, pageX, pageY) {
             $('#BRcontainer').animate({scrollTop: leafTop },'fast');
         }
     } else {
+        this.firstIndex = index;
         // 1up
         var leafTop = this.onePageGetPageTop(index);
 
@@ -1419,6 +1432,15 @@ BookReader.prototype.switchMode = function(mode) {
         this.reduce = this.quantizeReduce(this.reduce, this.twoPage.reductionFactors);
         this.prepareTwoPageView();
         this.twoPageCenterView(0.5, 0.5); // $$$ TODO preserve center
+    }
+    // Disable the rotate button unless mode is constMode1up.
+    jIcons = $('.BRicon');
+    if (mode == this.constMode1up) {
+        jIcons.filter('.rotate').addClass('enabled');
+        jIcons.filter('.rotate').removeClass('disabled');
+    } else {
+        jIcons.filter('.rotate').removeClass('enabled');
+        jIcons.filter('.rotate').addClass('disabled');
     }
 
 }
@@ -3324,6 +3346,7 @@ BookReader.prototype.initNavbar = function() {
         +         '<button class="BRicon onepg"></button>'
         +         '<button class="BRicon twopg"></button>'
         +         '<button class="BRicon thumb"></button>'
+        +         '<button class="BRicon rotate enabled"></button>'
         // $$$ not yet implemented
         //+         '<button class="BRicon fit"></button>'
         +         '<button class="BRicon zoom_in"></button>'
@@ -3401,6 +3424,7 @@ BookReader.prototype.initEmbedNavbar = function() {
     $('#BookReader').append(
         '<div id="BRnav">'
         +   "<span id='BRtoolbarbuttons'>"
+        +         '<button class="BRicon rotate"></button>'
         +         '<button class="BRicon full"></button>'
         +         '<button class="BRicon book_left"></button>'
         +         '<button class="BRicon book_right"></button>'
@@ -3825,6 +3849,11 @@ BookReader.prototype.bindNavigationHandlers = function() {
         // XXXmang implement autofit zoom
     });
 
+    jIcons.filter('.rotate').click(function(e) {
+        self.pRotate();
+        return false;
+    });
+    
     jIcons.filter('.book_left').click(function(e) {
         self.ttsStop();
         self.left();
@@ -4855,6 +4884,75 @@ BookReader.prototype.ttsStart = function () {
     this.ttsGetText(this.ttsIndex, 'ttsStartCB');
 }
 
+// pRotate()
+//______________________________________________________________________________
+BookReader.prototype.pRotate = function () {
+    if(this.mode !== this.constMode1up) { return; }
+    var index = this.currentIndex();
+    console.log('rotate image index ' + index + ' [NEVER WILL BE LAST PAGE!]');
+    var viewWidth = $('#BookReader').attr('scrollWidth') - 17;
+    var height  = parseInt(this._getPageWidth(index)/this.reduce);
+    var width   = parseInt(this._getPageHeight(index)/this.reduce);
+    var div = $("#" + 'pagediv'+index);
+    var img = div.find('img');
+    var src = img.attr('src');
+    var srcParams = src.split("&");
+    for(var i=0; i<srcParams.length; i++) {
+        if (srcParams[i].substring(0,10) === 'svc.rotate') {
+            var nameVal = srcParams[i].split("=");
+            var useWidth = width;
+            var useHeight = height;
+            var leafTop = 0;
+            var j;
+            for (j=0; j<index; j++) {
+                leafTop += parseInt(this._getPageHeight(j)/this.reduce) + 10;
+            }            
+            var top = leafTop;
+            switch(nameVal[1]) {
+                case '0':
+                    src = src.replace("rotate=0", 'rotate=270');
+                    $(div).css('margin-top', (useWidth - useHeight) / 2 + 'px');
+                    this.rotations[index] = 270;
+                    break;
+                case '90':
+                    src = src.replace("rotate=90", 'rotate=0');
+                    $(div).css('margin-top', 0);
+                    useWidth = height;
+                    useHeight = width;
+                    this.rotations[index] = 0;
+                    break;
+                case '180':
+                    src = src.replace("rotate=180", 'rotate=90');
+                    $(div).css('margin-top', (useWidth - useHeight) / 2 + 'px');
+                    this.rotations[index] = 90;
+                    break;
+                case '270':
+                    src = src.replace("rotate=270", 'rotate=180');
+                    useWidth = height;
+                    useHeight = width;
+                    $(div).css('margin-top', 0);
+                    this.rotations[index] = 180;
+                    break;
+            }
+            var left = (viewWidth-useWidth)>>1;
+            console.log('REDUCE = ' + this.reduce + ', top = ' + top + ', useHeight = ' + useHeight + ', leafTop = ' + leafTop + ', left = ' + left + ', useWidth = ' + useWidth + ', viewWidth = ' + viewWidth);
+            if (top<0) top = 0;
+            if (left<0) left = 0;
+            $(div).css('left', left+'px');
+            $(div).css('top', top+'px');
+            $(div).css('width', useWidth+'px');
+            $(div).css('height', useHeight+'px');
+            div.empty();
+            var rImg = document.createElement("img");
+            rImg.src = src;
+            $(rImg).addClass('BRnoselect');
+            $(rImg).css('width', '100%');
+            $(rImg).css('height', '100%');
+            $(div).append(rImg);
+        }
+    }
+}
+
 // ttsStop()
 //______________________________________________________________________________
 BookReader.prototype.ttsStop = function () {
@@ -5322,6 +5420,7 @@ BookReader.prototype.initUIStrings = function()
     var titles = { '.logo': 'Go to Archive.org', // $$$ update after getting OL record
                    '.zoom_in': 'Zoom in',
                    '.zoom_out': 'Zoom out',
+                   '.rotate': 'Rotate page',
                    '.onepg': 'One-page view',
                    '.twopg': 'Two-page view',
                    '.thumb': 'Thumbnail view',

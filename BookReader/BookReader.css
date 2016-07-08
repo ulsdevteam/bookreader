@@ -226,6 +226,15 @@ a {
     background-repeat: no-repeat;
 }
 
+.BRicon.rotate.disabled {
+    background-position: 0 0;
+    background-image: url(images/rotate_disabled.png);
+}
+.BRicon.rotate.disabled:hover {
+    background-position: -40px 0;
+    background-image: url(images/rotate_disabled.png);
+}
+
 .BRicon.logo {background-position:0 0;}
 .BRicon.info {background-position:-40px 0;}
 .BRicon.info:hover {background-position:-80px 0;}
@@ -257,7 +266,14 @@ a {
 .BRicon.thumb:hover {background-position:-1120px 0;}
 .BRicon.fit {background-position:-1160px 0;}
 .BRicon.fit:hover {background-position:-1200px 0;}
-
+.BRicon.rotate.enabled {
+    background-image: url(images/BRicons.png) !important;
+    background-position:-1240px 0 !important;
+}
+.BRicon.rotate.enabled:hover {
+    background-image: url(images/BRicons.png) !important;
+    background-position:-1280px 0 !important;
+}
 
 a.logo {
     display: block;
@@ -572,7 +588,7 @@ a.BRgrey:visited   { color: #666; }
 }
 div#BRpage {
     float: right;
-    width: 280px;
+    width: 320px;
     padding-left:12px;
     text-align: right;
 }
@@ -593,7 +609,7 @@ div#BRnav {
 }
 div#BRnavpos {
     position: relative;
-    margin-right: 280px;
+    margin-right: 320px;
     height: 40px;
 }
 div#BRpager {
