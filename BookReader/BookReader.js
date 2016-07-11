@@ -396,7 +396,7 @@ BookReader.prototype.drawLeafs = function() {
     } else {
         this.drawLeafsTwoPage();
     }
-    console.log('drawLeafs');
+    //console.log('drawLeafs');
 }
 
 // bindGestures(jElement)
@@ -4889,7 +4889,7 @@ BookReader.prototype.ttsStart = function () {
 BookReader.prototype.pRotate = function () {
     if(this.mode !== this.constMode1up) { return; }
     var index = this.currentIndex();
-    console.log('rotate image index ' + index + ' [NEVER WILL BE LAST PAGE!]');
+    //console.log('rotate image index ' + index + ' [NEVER WILL BE LAST PAGE!]');
     var viewWidth = $('#BookReader').attr('scrollWidth') - 17;
     var height  = parseInt(this._getPageWidth(index)/this.reduce);
     var width   = parseInt(this._getPageHeight(index)/this.reduce);
@@ -4935,7 +4935,7 @@ BookReader.prototype.pRotate = function () {
                     break;
             }
             var left = (viewWidth-useWidth)>>1;
-            console.log('REDUCE = ' + this.reduce + ', top = ' + top + ', useHeight = ' + useHeight + ', leafTop = ' + leafTop + ', left = ' + left + ', useWidth = ' + useWidth + ', viewWidth = ' + viewWidth);
+            //console.log('REDUCE = ' + this.reduce + ', top = ' + top + ', useHeight = ' + useHeight + ', leafTop = ' + leafTop + ', left = ' + left + ', useWidth = ' + useWidth + ', viewWidth = ' + viewWidth);
             if (top<0) top = 0;
             if (left<0) left = 0;
             $(div).css('left', left+'px');
